@@ -1,0 +1,44 @@
+{
+    "data": {
+        "Video_Danger_Alert.mp4": {
+            "start_point": "224, 52",
+            "end_point": "416, 281"
+        },
+        "level_crossing_bahau.mp4": {
+            "start_point": "223, 40",
+            "end_point": "445, 611"
+        },
+        "level crossing bahau.mp4": {
+            "start_point": "257, 121",
+            "end_point": "516, 434"
+        },
+        "train_video.mp4": {
+            "start_point": "103, 205",
+            "end_point": "335, 588"
+        },
+        "lrt_bandaraya_peak.mp4": {
+            "start_point": "146, 130",
+            "end_point": "401, 337"
+        },
+        "KTM Serdang.mp4": {
+            "start_point": "288, 115",
+            "end_point": "446, 362"
+        },
+        "LRT Bandaraya_small.mp4": {
+            "start_point": "170, 165",
+            "end_point": "386, 385"
+        },
+        "pedestrian_surveillance.mp4": {
+            "start_point": "200, 40",
+            "end_point": "436, 352"
+        },
+        "train sample.mp4": {
+            "start_point": "218, 69",
+            "end_point": "432, 342"
+        },
+        "vehicle_surveillance.mp4": {
+            "start_point": "268, 73",
+            "end_point": "480, 340"
+        }
+    }
+}

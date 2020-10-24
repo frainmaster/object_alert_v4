@@ -12,6 +12,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import scrolledtext
 import cv2
+import json
 
 class ObjectAlertApp(Tk):
 	def __init__(self):
@@ -50,7 +51,7 @@ class ObjectAlertApp(Tk):
 
 		self.model_name = StringVar()
 		# self.model_name.set(self.getModelString(self.models[0]))
-		self.model_name.set(self.models[0])
+		self.model_name.set(self.models[1])
 
 		self.model_dropdown = OptionMenu(
 			self,
@@ -176,13 +177,17 @@ class ObjectAlertApp(Tk):
 				'Generate video?',
 				'Detection model: ' + selected_model
 				+ '\nSelected video: ' + input_video):
+				start_point, end_point = (self.start_x, self.start_y), (self.x, self.y)
+				roi = (start_point[0]+end_point[0])//2
+				if messagebox.askyesno(
+					'Save points?',
+					'Do you want to save the start and end points as default points afterwards?'):
+					self.saveToJson(input_video, str(start_point), str(end_point))
 				from utils import backbone
 				from api import object_alert_api as oa_api
 				self.log_msg('selected_model: ' + selected_model)
 				self.log_msg('input_video: ' + input_video)
 				detection_graph, category_index = backbone.set_model(selected_model, 'mscoco_label_map.pbtxt')
-				start_point, end_point = (self.start_x, self.start_y), (self.x, self.y)
-				roi = (start_point[0]+end_point[0])//2
 				self.log_msg('Video is being generated')
 				oa_api.object_alert(
 					'input/' + input_video,
@@ -194,6 +199,18 @@ class ObjectAlertApp(Tk):
 				self.log_msg('Video and excel file has been produced')
 			else:
 				self.log_msg('Generate video cancelled')
+
+	def saveToJson(self, input_video, start_point, end_point):
+		video_data = './input/video_data.json'
+		f = open(video_data)
+		data = json.load(f)
+		f.close()
+		new_data = {'start_point': start_point[1:len(start_point)-1], 'end_point': end_point[1:len(end_point)-1]}
+		data['data'][input_video] = new_data
+		f = open(video_data, 'w')
+		f.write(json.dumps(data, indent=4))
+		f.close()
+		print('data for {} is updated'.format(input_video))
 
 	# canvas functions
 	def clear_canvas(self):
