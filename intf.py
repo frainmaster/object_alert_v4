@@ -201,7 +201,7 @@ class ObjectAlertApp(Tk):
 				self.log_msg('Generate video cancelled')
 
 	def saveToJson(self, input_video, start_point, end_point):
-		video_data = './input/video_data.json'
+		video_data = './input/res/video_data.json'
 		f = open(video_data)
 		data = json.load(f)
 		f.close()
