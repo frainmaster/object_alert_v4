@@ -1,13 +1,5 @@
 #!/usr/bin/python3.7
 
-"""
-----------------------------------------------
---- Author         : Irfan Ahmad
---- Mail           : irfanibnuahmad@gmail.com
---- Date           : 18th Oct 2020
-----------------------------------------------
-"""
-
 from os import listdir
 import json
 
@@ -35,7 +27,10 @@ for i in data["data"]:
         start_point, end_point = tuple(map(int, data["data"][i]["start_point"].split(", "))), tuple(map(int, data["data"][i]["end_point"].split(", ")))
 
 if input_video == 0:
-    raise IOError("data not found. please setup data")
+    print("data not found. please setup data")
+    exec(open("./intf.py").read())
+    quit()
+    # raise IOError("data not found. please setup data")
 
 roi = (start_point[0]+end_point[0])//2
 

@@ -1,6 +1,6 @@
 numpy
 scipy
 scikit-image
-tensorflow
+tensorflow==2.0
 opencv-python
 XlsxWriter

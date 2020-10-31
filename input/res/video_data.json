@@ -39,6 +39,10 @@
         "vehicle_surveillance.mp4": {
             "start_point": "268, 73",
             "end_point": "480, 340"
+        },
+        "Video Danger Alert.mp4": {
+            "start_point": "170, 98",
+            "end_point": "483, 282"
         }
     }
 }

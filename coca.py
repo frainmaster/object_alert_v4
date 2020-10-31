@@ -1,35 +1,46 @@
 #!/usr/bin/python3.7
 
-#----------------------------------------------
-#--- Author         : Irfan Ahmad
-#--- Mail           : frainmaster@gmail.com
-#--- Date           : 27th June 2020
-#----------------------------------------------
+from os import listdir
+import json
+
+input_video_path = "./input/"
+video_data = "./input/res/video_data.json"
+
+f = open(video_data)
+data = json.load(f)
+f.close()
+
+list = [k for k in listdir(input_video_path) if k != "res"]
+
+# select video here
+print("select video:\n")
+for i, j in enumerate(list):
+    print(i+1, j)
+selected_vid = list[int(input())-1]
+print("selected video: " + selected_vid)
+
+input_video = start_point = end_point = 0
+
+for i in data["data"]:
+    if i == selected_vid:
+        input_video = selected_vid
+        start_point, end_point = tuple(map(int, data["data"][i]["start_point"].split(", "))), tuple(map(int, data["data"][i]["end_point"].split(", ")))
+
+if input_video == 0:
+    print("data not found. please setup data")
+    exec(open("./intf.py").read())
+    quit()
+    # raise IOError("data not found. please setup data")
+
+roi = (start_point[0]+end_point[0])//2
 
 # Object detection imports
 from utils import backbone
-from api import cumul_object_counting_api as coc_api
+from api import cumul_object_counting_api as coca_api
 
 # By default I use an "SSD with Mobilenet" model here. See the detection model zoo (https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md) for a list of other models that can be run out-of-the-box with varying speeds and accuracies.
-detection_graph, category_index = backbone.set_model('ssd_mobilenet_v1_0.75_depth_300x300_coco14_sync_2018_07_03', 'mscoco_label_map.pbtxt') # 26 ms
-# detection_graph, category_index = backbone.set_model('ssd_mobilenet_v1_coco_2018_01_28', 'mscoco_label_map.pbtxt') # 30 ms
-# detection_graph, category_index = backbone.set_model('faster_rcnn_inception_v2_coco_2018_01_28', 'mscoco_label_map.pbtxt') # 58 ms
+detection_graph, category_index = backbone.set_model("ssd_mobilenet_v1_0.75_depth_300x300_coco14_sync_2018_07_03", "mscoco_label_map.pbtxt")  # 26 ms
+# detection_graph, category_index = backbone.set_model("ssd_mobilenet_v1_coco_2018_01_28", "mscoco_label_map.pbtxt")  # 30 ms
+# detection_graph, category_index = backbone.set_model("faster_rcnn_inception_v2_coco_2018_01_28", "mscoco_label_map.pbtxt")  # 58 ms
 
-input_video_path = './input/'
-
-# # default values
-inter = 3
-# is_color_recognition_enabled = 0
-# deviation = 1
-
-##########################################################
-##########################################################
-
-input_video = 'level crossing bahau.mp4'
-roi = .5		# roi line position; input value in between 0 to 1 to set the line by percentage of video size
-roi_axis = 0	# axis of ROI line; 0=x, 1=y
-
-##########################################################
-##########################################################
-
-coc_api.cumul_object_counting_roi_line(input_video_path + input_video, detection_graph, category_index, roi, roi_axis, interval=inter)
+coca_api.cumul_object_counting_roi_line(input_video_path + input_video, detection_graph, category_index, start_point, end_point, roi)

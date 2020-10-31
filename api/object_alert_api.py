@@ -62,7 +62,7 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
 
     if orientation in [90, 270]:
         height, width = width, height
-    output_video = cv2.VideoWriter(output_path + vid_name + '.mp4', fourcc, fps, (width, height))
+    output_video = cv2.VideoWriter(output_path + vid_name + '_oaa.mp4', fourcc, fps, (width, height))
 
     print('height: ' + str(height))
     print('width: ' + str(width))
@@ -91,7 +91,7 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
             current_row = 0
             interval_duration = 5
 
-            workbook = xl.Workbook(output_path + vid_name + '_counter.xlsx')
+            workbook = xl.Workbook(output_path + vid_name + '_counter_oaa.xlsx')
             worksheet = workbook.add_worksheet()
             bold = workbook.add_format({'bold': True})
 
@@ -140,7 +140,8 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
                     x_reference = roi,
                     deviation = 1,
                     use_normalized_coordinates=True,
-                    line_thickness=4)
+                    min_score_thresh=.6,
+                    line_thickness=2)
 
                 # counter, csv_line, counting_mode = vis_util.visualize_boxes_and_labels_on_image_array(
                 #     cap.get(1),
@@ -164,36 +165,52 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
                 total_passed_object += counter
                 total_passed_object_per_interval += counter
 
-                # for a, b in enumerate(boxes[0]):
-                #     if classes[0][a] in [1, 3, 4, 6, 7, 8]:
-                #         print(classes[0][a], counting_mode)
-                    # if scores[0][a] > .6:
-                    #     mid_x = (boxes[0][a][3] + boxes[0][a][1])/2
-                    #     mid_y = (boxes[0][a][2] + boxes[0][a][0])/2
-                    #     apx_distance = round(1-(boxes[0][a][3] - boxes[0][a][1])**4, 1)
-                    #     # cv2.putText(
-                    #     #     # cropped_frame,
-                    #     #     frame,
-                    #     #     '{}'.format(apx_distance),
-                    #     #     (int(mid_x*width), int(mid_y*height)),
-                    #     #     # (int(mid_x), int(mid_y)),
-                    #     #     font,
-                    #     #     .7,
-                    #     #     (255, 255, 255),
-                    #     #     2
-                    #     #     )
-                    #     if apx_distance <= .5:
-                    #         if mid_x > .1 and mid_x < .9:
-                    #             cv2.putText(
-                    #                 frame,
-                    #                 'WARNING',
-                    #                 (10, 35),
-                    #                 # (int(mid_x*width), int(mid_y*height)),
-                    #                 font,
-                    #                 1,
-                    #                 (0, 0, 255),
-                    #                 3
-                    #             )
+                for a, b in enumerate(boxes[0]):
+                    # if classes[0][a] in [9]: # tis a boat
+                    # if classes[0][a] in [1, 2, 3, 4, 6, 7, 8]:
+                    #     print(classes[0][a], counting_mode)
+                        if scores[0][a] > .6:
+                            mid_x = (boxes[0][a][3] + boxes[0][a][1])/2
+                            mid_y = (boxes[0][a][2] + boxes[0][a][0])/2
+                            apx_distance = round((1-(boxes[0][a][3] - boxes[0][a][1]))**4, 1)
+                            # cv2.putText(
+                            #     cropped_frame,
+                            #     # frame,
+                            #     '{}'.format(apx_distance),
+                            #     (int(mid_x*width), int(mid_y*height)),
+                            #     # (int(mid_x), int(mid_y)),
+                            #     font,
+                            #     .7,
+                            #     (255, 255, 255),
+                            #     2
+                            #     )
+                            if apx_distance <= .6:
+                                if mid_x > .1 and mid_x < .9:
+                                    cv2.putText(
+                                        frame,
+                                        'WARNING',
+                                        (10, 70),
+                                        # (int(mid_x*width), int(mid_y*height)),
+                                        font,
+                                        .7,
+                                        (0, 0, 255),
+                                        2
+                                    )
+
+                # # when objects are detected, an alert will appear
+                # # if counter > 0:
+                # if counting_mode != '':
+                #     cv2.putText(
+                #         frame,
+                #         'CAUTION',
+                #         (10, 35),
+                #         font,
+                #         .8,
+                #         (0, 0, 0xFF),
+                #         2,
+                #         cv2.LINE_AA)
+                #     # if frame_counter % fps == 0:
+                #     #     total_passed_object_per_interval += 1
 
                 cv2.putText(
                         frame,

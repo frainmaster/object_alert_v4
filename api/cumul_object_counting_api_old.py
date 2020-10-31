@@ -11,6 +11,18 @@ import numpy as np
 from utils import visualization_utils as vis_util
 import xlsxwriter as xl
 
+# parameters:
+	# input_video						name of input video
+	# detection_graph					from backbone.set_model
+	# category_index					from backbone.set_model
+	# roi								line position, can be by percentage of video size
+	# roi_axis							axis of ROI line; 0=x, 1=y
+
+# optional parameters
+	# interval=5						interval to write into excel file, in seconds
+	# is_color_recognition_enabled=0	status of colour recognition; 0=disabled, 1=enabled
+	# deviation=1						constant that represents the object counting area
+
 import subprocess, re
 
 def get_orientation(input_video):
@@ -32,10 +44,7 @@ def get_orientation(input_video):
 		print('video is in the right orientation')
 	return orientation
 
-def cumul_object_counting_roi_line(input_video, detection_graph, category_index, start_point, end_point, roi):
-
-	roi_axis = 0
-	interval = 5
+def cumul_object_counting_roi_line(input_video, detection_graph, category_index, roi, roi_axis, interval=5, is_color_recognition_enabled=0, deviation=1):
 
 	total_passed_object = 0
 	# output path
@@ -55,7 +64,7 @@ def cumul_object_counting_roi_line(input_video, detection_graph, category_index,
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
 	if orientation in [90, 270]:
 		height, width = width, height
-	output_video = cv2.VideoWriter(output_path + vid_name + '_coca.mp4', fourcc, fps, (width, height))
+	output_video = cv2.VideoWriter(output_path + vid_name + '.mp4', fourcc, fps, (width, height))
 
 	print('height: ' + str(height))
 	print('width: ' + str(width))
@@ -63,12 +72,12 @@ def cumul_object_counting_roi_line(input_video, detection_graph, category_index,
 	print('fps: ' + str(fps))
 	print('video name: ' + vid_name)
 
-	# # set roi by percentage of video size
-	# if roi > 0 and roi < 1:
-	# 	if roi_axis == 0:
-	# 		roi = int(width*roi)
-	# 	elif roi_axis == 1:
-	# 		roi = int(height*roi)
+	# set roi by percentage of video size
+	if roi > 0 and roi < 1:
+		if roi_axis == 0:
+			roi = int(width*roi)
+		elif roi_axis == 1:
+			roi = int(height*roi)
 
 	with detection_graph.as_default():
 		with tf.Session(graph=detection_graph) as sess:
@@ -90,7 +99,7 @@ def cumul_object_counting_roi_line(input_video, detection_graph, category_index,
 			final_col = 0
 			current_row = 0
 
-			workbook = xl.Workbook(output_path + vid_name + '_' + str(interval) + 's_interval_coca.xlsx')
+			workbook = xl.Workbook(output_path + vid_name + '_' + str(interval) + 's_interval.xlsx')
 			worksheet = workbook.add_worksheet()
 			bold = workbook.add_format({'bold': True})
 
@@ -111,13 +120,8 @@ def cumul_object_counting_roi_line(input_video, detection_graph, category_index,
 					print("end of the video file...")
 					break
 
-				# draw rectangle; blue, line thickness=1
-				(w1, h1), (w2, h2) = start_point, end_point
-				cv2.rectangle(frame, start_point, end_point, (255, 0, 0), 1)
-				cropped_frame = frame[h1:h2, w1:w2]
-
 				# Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-				image_np_expanded = np.expand_dims(cropped_frame, axis=0)
+				image_np_expanded = np.expand_dims(frame, axis=0)
 
 				# Actual detection.
 				(boxes, scores, classes, num) = sess.run(
@@ -131,36 +135,36 @@ def cumul_object_counting_roi_line(input_video, detection_graph, category_index,
 				if roi_axis == 0:	# if x axis
 					counter, csv_line, counting_mode = vis_util.visualize_boxes_and_labels_on_image_array_x_axis(
 						cap.get(1),
-						cropped_frame,
+						frame,
 						1,
-						0,
+						is_color_recognition_enabled,
 						np.squeeze(boxes),
 						np.squeeze(classes).astype(np.int32),
 						np.squeeze(scores),
 						category_index,
 						x_reference = roi,
-						deviation = 1,
+						deviation = deviation,
 						use_normalized_coordinates=True,
 						line_thickness=4)
 
 					# when the vehicle passed over line and counted, make the color of ROI line green
-					# if counter == 1:
-					# 	cv2.line(frame, (roi, 0), (roi, height), (0, 0xFF, 0), 5)
-					# else:
-					# 	cv2.line(frame, (roi, 0), (roi, height), (0, 0, 0xFF), 5)
+					if counter == 1:
+						cv2.line(frame, (roi, 0), (roi, height), (0, 0xFF, 0), 5)
+					else:
+						cv2.line(frame, (roi, 0), (roi, height), (0, 0, 0xFF), 5)
 
 				elif roi_axis == 1:	# if y axis
 					counter, csv_line, counting_mode = vis_util.visualize_boxes_and_labels_on_image_array_y_axis(
 						cap.get(1),
-						cropped_frame,
-						2,  # for y axis
-						0,
+						frame,
+						2,
+						is_color_recognition_enabled,
 						np.squeeze(boxes),
 						np.squeeze(classes).astype(np.int32),
 						np.squeeze(scores),
 						category_index,
 						y_reference = roi,
-						deviation = 1,
+						deviation = deviation,
 						use_normalized_coordinates=True,
 						line_thickness=4)
 
