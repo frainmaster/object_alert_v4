@@ -1,11 +1,3 @@
-"""
-----------------------------------------------
---- Author         : Irfan Ahmad
---- Mail           : irfanibnuahmad@gmail.com
---- Date           : 18th Oct 2020
-----------------------------------------------
-"""
-
 import tensorflow.compat.v1 as tf
 import cv2
 import numpy as np
@@ -45,6 +37,8 @@ def get_orientation(input_video):
 
 def object_alert(input_video, detection_graph, category_index, start_point, end_point, roi):
 
+    api_suffix = '_oaa'
+
     total_passed_object = 0
     output_path = 'output/'
     cap = cv2.VideoCapture(input_video)
@@ -62,13 +56,15 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
 
     if orientation in [90, 270]:
         height, width = width, height
-    output_video = cv2.VideoWriter(output_path + vid_name + '_oaa.mp4', fourcc, fps, (width, height))
+    output_video = cv2.VideoWriter(output_path + vid_name + api_suffix + '.mp4', fourcc, fps, (width, height))
 
     print('height: ' + str(height))
     print('width: ' + str(width))
     print('frame count: ' + str(total_frame))
     print('fps: ' + str(fps))
     print('video name: ' + vid_name)
+
+    start_warning = 0
 
     with detection_graph.as_default():
         with tf.Session(graph=detection_graph) as sess:
@@ -91,14 +87,14 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
             current_row = 0
             interval_duration = 5
 
-            workbook = xl.Workbook(output_path + vid_name + '_counter_oaa.xlsx')
-            worksheet = workbook.add_worksheet()
-            bold = workbook.add_format({'bold': True})
+            # workbook = xl.Workbook(output_path + vid_name + '_counter_oaa.xlsx')
+            # worksheet = workbook.add_worksheet()
+            # bold = workbook.add_format({'bold': True})
 
-            # write table header
-            worksheet.write('A1', 'TIME (S)', bold)
-            worksheet.write('B1', 'COUNT', bold)
-            worksheet.write('C1', 'CUMULATIVE', bold)
+            # # write table header
+            # worksheet.write('A1', 'TIME (S)', bold)
+            # worksheet.write('B1', 'COUNT', bold)
+            # worksheet.write('C1', 'CUMULATIVE', bold)
 
             # for all the frames that are extracted from input video
             while(cap.isOpened()):
@@ -156,11 +152,11 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
                 #     min_score_thresh=.5,
                 #     line_thickness=4)
 
-                # when the vehicle passed over line and counted, make the color of ROI line green
-                if counter == 1:
-                    cv2.line(frame, (roi, 0), (roi, height), (0, 0xFF, 0), 1)
-                else:
-                    cv2.line(frame, (roi, 0), (roi, height), (0, 0, 0xFF), 1)
+                # # when the vehicle passed over line and counted, make the color of ROI line green
+                # if counter == 1:
+                #     cv2.line(frame, (roi, 0), (roi, height), (0, 0xFF, 0), 1)
+                # else:
+                #     cv2.line(frame, (roi, 0), (roi, height), (0, 0, 0xFF), 1)
 
                 total_passed_object += counter
                 total_passed_object_per_interval += counter
@@ -188,14 +184,27 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
                                 if mid_x > .1 and mid_x < .9:
                                     cv2.putText(
                                         frame,
-                                        'WARNING',
-                                        (10, 70),
-                                        # (int(mid_x*width), int(mid_y*height)),
+                                        'CAUTION',
+                                        # (10, 70),
+                                        ((w1+w2)//2-40, (h1+h2)//2+5),
                                         font,
                                         .7,
                                         (0, 0, 255),
                                         2
                                     )
+                                    start_warning = frame_counter + fps * 5
+
+                if frame_counter < start_warning:
+                    cv2.putText(
+                        frame,
+                        'CAUTION',
+                        # (10, 70),
+                        ((w1+w2)//2-40, (h1+h2)//2+5),
+                        font,
+                        .7,
+                        (0, 0, 255),
+                        2
+                    )
 
                 # # when objects are detected, an alert will appear
                 # # if counter > 0:
@@ -240,57 +249,57 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
                 output_video.write(frame)
                 print ('writing frame ' + str(frame_counter) + '/' + str(total_frame))
 
-                # writing to excel file
-                if frame_counter % (interval_duration*fps) == 0:
-                    current_row = frame_counter//(interval_duration*fps)
-                    worksheet.write(current_row, 0, frame_counter//fps)
-                    worksheet.write(current_row, 1, total_passed_object_per_interval)
-                    if current_row == 1:
-                        worksheet.write(current_row, 2, '=B2')
-                    else:
-                        worksheet.write(current_row, 2, '=B' + str(current_row+1) + '+C' + str(current_row)) # =B(x+1)+C(x)
-                    total_passed_object_per_interval = 0
+                # # writing to excel file
+                # if frame_counter % (interval_duration*fps) == 0:
+                #     current_row = frame_counter//(interval_duration*fps)
+                #     worksheet.write(current_row, 0, frame_counter//fps)
+                #     worksheet.write(current_row, 1, total_passed_object_per_interval)
+                #     if current_row == 1:
+                #         worksheet.write(current_row, 2, '=B2')
+                #     else:
+                #         worksheet.write(current_row, 2, '=B' + str(current_row+1) + '+C' + str(current_row)) # =B(x+1)+C(x)
+                #     total_passed_object_per_interval = 0
 
-                if frame_counter == total_frame:
-                    final_col = current_row
+                # if frame_counter == total_frame:
+                #     final_col = current_row
 
                 frame_counter += 1
 
-            # crate the graph consisting of bar and line chart
-            bar_chart = workbook.add_chart({'type':'column'})
-            bar_chart.add_series({
-                'name':'=Sheet1!B1',
-                'categories':'=Sheet1!A2:A' + str(final_col+1),
-                'values':'=Sheet1!B2:B' + str(final_col+1)
-                })
-            line_chart = workbook.add_chart({'type':'line'})
-            line_chart.add_series({
-                'name':'=Sheet1!C1',
-                'categories':'=Sheet1!A2:A' + str(final_col+1),
-                'values':'=Sheet1!C2:C' + str(final_col+1)
-                })
-            bar_chart.combine(line_chart)
+            # # crate the graph consisting of bar and line chart
+            # bar_chart = workbook.add_chart({'type':'column'})
+            # bar_chart.add_series({
+            #     'name':'=Sheet1!B1',
+            #     'categories':'=Sheet1!A2:A' + str(final_col+1),
+            #     'values':'=Sheet1!B2:B' + str(final_col+1)
+            #     })
+            # line_chart = workbook.add_chart({'type':'line'})
+            # line_chart.add_series({
+            #     'name':'=Sheet1!C1',
+            #     'categories':'=Sheet1!A2:A' + str(final_col+1),
+            #     'values':'=Sheet1!C2:C' + str(final_col+1)
+            #     })
+            # bar_chart.combine(line_chart)
 
-            bar_chart.set_title({'name':'No of Alerts'})
-            bar_chart.set_x_axis({'name':'=Sheet1!A1'})
-            bar_chart.set_y_axis({'name':'Alert count'})
-            worksheet.insert_chart('F2', bar_chart)
+            # bar_chart.set_title({'name':'No of Alerts'})
+            # bar_chart.set_x_axis({'name':'=Sheet1!A1'})
+            # bar_chart.set_y_axis({'name':'Alert count'})
+            # worksheet.insert_chart('F2', bar_chart)
 
-            # mode, median and mean of data (count)
-            worksheet.write('A' + str(final_col+3), 'MODE', bold)
-            worksheet.write('A' + str(final_col+4), 'MEDIAN', bold)
-            worksheet.write('A' + str(final_col+5), 'MEAN', bold)
-            worksheet.write('A' + str(final_col+6), 'SD', bold)
-            worksheet.write('B' + str(final_col+3), '=MODE(B2:B' + str(final_col+1) + ')')
-            worksheet.write('B' + str(final_col+4), '=MEDIAN(B2:B' + str(final_col+1) + ')')
-            worksheet.write('B' + str(final_col+5), '=AVERAGE(B2:B' + str(final_col+1) + ')')
-            worksheet.write('B' + str(final_col+6), '=STDEV(B2:B' + str(final_col+1) + ')')
-            worksheet.write('C' + str(final_col+3), '=MODE(C2:C' + str(final_col+1) + ')')
-            worksheet.write('C' + str(final_col+4), '=MEDIAN(C2:C' + str(final_col+1) + ')')
-            worksheet.write('C' + str(final_col+5), '=AVERAGE(C2:C' + str(final_col+1) + ')')
-            worksheet.write('C' + str(final_col+6), '=STDEV(C2:C' + str(final_col+1) + ')')
+            # # mode, median and mean of data (count)
+            # worksheet.write('A' + str(final_col+3), 'MODE', bold)
+            # worksheet.write('A' + str(final_col+4), 'MEDIAN', bold)
+            # worksheet.write('A' + str(final_col+5), 'MEAN', bold)
+            # worksheet.write('A' + str(final_col+6), 'SD', bold)
+            # worksheet.write('B' + str(final_col+3), '=MODE(B2:B' + str(final_col+1) + ')')
+            # worksheet.write('B' + str(final_col+4), '=MEDIAN(B2:B' + str(final_col+1) + ')')
+            # worksheet.write('B' + str(final_col+5), '=AVERAGE(B2:B' + str(final_col+1) + ')')
+            # worksheet.write('B' + str(final_col+6), '=STDEV(B2:B' + str(final_col+1) + ')')
+            # worksheet.write('C' + str(final_col+3), '=MODE(C2:C' + str(final_col+1) + ')')
+            # worksheet.write('C' + str(final_col+4), '=MEDIAN(C2:C' + str(final_col+1) + ')')
+            # worksheet.write('C' + str(final_col+5), '=AVERAGE(C2:C' + str(final_col+1) + ')')
+            # worksheet.write('C' + str(final_col+6), '=STDEV(C2:C' + str(final_col+1) + ')')
 
-            workbook.close()
+            # workbook.close()
 
             cap.release()
             cv2.destroyAllWindows()
