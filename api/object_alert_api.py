@@ -87,15 +87,6 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
             current_row = 0
             interval_duration = 5
 
-            # workbook = xl.Workbook(output_path + vid_name + '_counter_oaa.xlsx')
-            # worksheet = workbook.add_worksheet()
-            # bold = workbook.add_format({'bold': True})
-
-            # # write table header
-            # worksheet.write('A1', 'TIME (S)', bold)
-            # worksheet.write('B1', 'COUNT', bold)
-            # worksheet.write('C1', 'CUMULATIVE', bold)
-
             # for all the frames that are extracted from input video
             while(cap.isOpened()):
                 ret, frame = cap.read()
@@ -138,25 +129,6 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
                     use_normalized_coordinates=True,
                     min_score_thresh=.6,
                     line_thickness=2)
-
-                # counter, csv_line, counting_mode = vis_util.visualize_boxes_and_labels_on_image_array(
-                #     cap.get(1),
-                #     cropped_frame,
-                #     1,
-                #     0,
-                #     np.squeeze(boxes),
-                #     np.squeeze(classes).astype(np.int32),
-                #     np.squeeze(scores),
-                #     category_index,
-                #     use_normalized_coordinates=True,
-                #     min_score_thresh=.5,
-                #     line_thickness=4)
-
-                # # when the vehicle passed over line and counted, make the color of ROI line green
-                # if counter == 1:
-                #     cv2.line(frame, (roi, 0), (roi, height), (0, 0xFF, 0), 1)
-                # else:
-                #     cv2.line(frame, (roi, 0), (roi, height), (0, 0, 0xFF), 1)
 
                 total_passed_object += counter
                 total_passed_object_per_interval += counter
@@ -206,100 +178,21 @@ def object_alert(input_video, detection_graph, category_index, start_point, end_
                         2
                     )
 
-                # # when objects are detected, an alert will appear
-                # # if counter > 0:
-                # if counting_mode != '':
-                #     cv2.putText(
-                #         frame,
-                #         'CAUTION',
-                #         (10, 35),
-                #         font,
-                #         .8,
-                #         (0, 0, 0xFF),
-                #         2,
-                #         cv2.LINE_AA)
-                #     # if frame_counter % fps == 0:
-                #     #     total_passed_object_per_interval += 1
-
-                cv2.putText(
-                        frame,
-                        'Object count: ' + str(total_passed_object),
-                        (10, 35),
-                        font,
-                        0.6,
-                        (0,255,255),
-                        2,
-                        cv2.FONT_HERSHEY_SIMPLEX
-                    )
-
-                # to perform counting based on boundary box
-                # if counting_mode != '':
-                #     # cv2.putText(
-                #     #     frame,
-                #     #     'CAUTION',
-                #     #     (10, 35),
-                #     #     font,
-                #     #     .8,
-                #     #     (0, 0, 0xFF),
-                #     #     2,
-                #     #     cv2.LINE_AA)
-                #     if frame_counter % fps == 0:
-                #         total_passed_object_per_interval += 1
+#                 cv2.putText(
+#                         frame,
+#                         'Object count: ' + str(total_passed_object),
+#                         (10, 35),
+#                         font,
+#                         0.6,
+#                         (0,255,255),
+#                         2,
+#                         cv2.FONT_HERSHEY_SIMPLEX
+#                     )
 
                 output_video.write(frame)
                 print ('writing frame ' + str(frame_counter) + '/' + str(total_frame))
 
-                # # writing to excel file
-                # if frame_counter % (interval_duration*fps) == 0:
-                #     current_row = frame_counter//(interval_duration*fps)
-                #     worksheet.write(current_row, 0, frame_counter//fps)
-                #     worksheet.write(current_row, 1, total_passed_object_per_interval)
-                #     if current_row == 1:
-                #         worksheet.write(current_row, 2, '=B2')
-                #     else:
-                #         worksheet.write(current_row, 2, '=B' + str(current_row+1) + '+C' + str(current_row)) # =B(x+1)+C(x)
-                #     total_passed_object_per_interval = 0
-
-                # if frame_counter == total_frame:
-                #     final_col = current_row
-
                 frame_counter += 1
-
-            # # crate the graph consisting of bar and line chart
-            # bar_chart = workbook.add_chart({'type':'column'})
-            # bar_chart.add_series({
-            #     'name':'=Sheet1!B1',
-            #     'categories':'=Sheet1!A2:A' + str(final_col+1),
-            #     'values':'=Sheet1!B2:B' + str(final_col+1)
-            #     })
-            # line_chart = workbook.add_chart({'type':'line'})
-            # line_chart.add_series({
-            #     'name':'=Sheet1!C1',
-            #     'categories':'=Sheet1!A2:A' + str(final_col+1),
-            #     'values':'=Sheet1!C2:C' + str(final_col+1)
-            #     })
-            # bar_chart.combine(line_chart)
-
-            # bar_chart.set_title({'name':'No of Alerts'})
-            # bar_chart.set_x_axis({'name':'=Sheet1!A1'})
-            # bar_chart.set_y_axis({'name':'Alert count'})
-            # worksheet.insert_chart('F2', bar_chart)
-
-            # # mode, median and mean of data (count)
-            # worksheet.write('A' + str(final_col+3), 'MODE', bold)
-            # worksheet.write('A' + str(final_col+4), 'MEDIAN', bold)
-            # worksheet.write('A' + str(final_col+5), 'MEAN', bold)
-            # worksheet.write('A' + str(final_col+6), 'SD', bold)
-            # worksheet.write('B' + str(final_col+3), '=MODE(B2:B' + str(final_col+1) + ')')
-            # worksheet.write('B' + str(final_col+4), '=MEDIAN(B2:B' + str(final_col+1) + ')')
-            # worksheet.write('B' + str(final_col+5), '=AVERAGE(B2:B' + str(final_col+1) + ')')
-            # worksheet.write('B' + str(final_col+6), '=STDEV(B2:B' + str(final_col+1) + ')')
-            # worksheet.write('C' + str(final_col+3), '=MODE(C2:C' + str(final_col+1) + ')')
-            # worksheet.write('C' + str(final_col+4), '=MEDIAN(C2:C' + str(final_col+1) + ')')
-            # worksheet.write('C' + str(final_col+5), '=AVERAGE(C2:C' + str(final_col+1) + ')')
-            # worksheet.write('C' + str(final_col+6), '=STDEV(C2:C' + str(final_col+1) + ')')
-
-            # workbook.close()
 
             cap.release()
             cv2.destroyAllWindows()
